@@ -123,7 +123,7 @@ mysite/
 
 * `manage.py`: 一个实用的命令行，用来与你的项目进行交互。它是一个对 *django-admin.py* 工具的简单封装。你不需要编辑这个文件。
 * `mysite/`: 你的项目目录，由以下的文件组成：
-    * `__init__`.py: 一个空文件用来告诉Python这个*mysite*目录是一个Python模块。
+    * `__init__.py`: 一个空文件用来告诉Python这个*mysite*目录是一个Python模块。
     * `settings.py`: 你的项目的设置和配置。里面包含一些初始化的设置。
     * `urls.py`: 你的URL模式存放的地方。这里定义的每一个URL都映射一个视图（view）。
     * `wsgi.py`: 配置你的项目运行如同一个WSGI应用。
@@ -237,8 +237,8 @@ blog/
 这些文件的含义：
 
 * admin.py: 在这儿你可以注册你的模型（models）并将它们包含到Django的管理页面中。使用Django的管理页面是可选的。
-* migrations: 这个目录将会包含你的应用的数据库迁移。Migrations允许Django跟踪你的模型（model）变化并因此来同步数据库。
-* models.py: 你的应用的数据模型（models）。所有的Django应用都需要拥有一个`models.py`文件，但是这个文件可以是空的。
+* migrations：这个目录将会包含你的应用的数据库迁移。Migrations允许Django跟踪你的模型（model）变化并因此来同步数据库。
+* models.py：你的应用的数据模型（models）。所有的Django应用都需要拥有一个 `models.py` 文件，但是这个文件可以是空的。
 * tests.py：在这儿你可以为你的应用创建测试。
 * views.py：你的应用逻辑将会放在这儿。每一个视图（view）都会接受一个HTTP请求，处理该请求，最后返回一个响应。
 
@@ -285,7 +285,7 @@ class Post(models.Model):
 
 * title：这个字段对应帖子的标题。它是 `CharField` ，在SQL数据库中会被转化成VARCHAR。
 * slug：这个字段将会在URLs中使用。slug就是一个短标签，该标签只包含字母，数字，下划线或连接线。我们将通过使用slug字段给我们的blog帖子构建漂亮的，友好的URLs。我们给该字段添加了 `unique_for_date` 参数，这样我们就可以使用日期和帖子的slug来为所有帖子构建URLs。在相同的日期中Django会阻止多篇帖子拥有相同的slug。
-* author：这是一个 `ForeignKey` 。这个字段定义了一个多对一（many-to-one）的关系。我们告诉Django一篇帖子只能由一名用户编写，一名用户能编写多篇帖子。根据这个字段，Django将会在数据库中通过有关联的模型（model）主键来创建一个外键。在这个场景中，我们关联上了Django权限系统的*User*模型（model）。我们通过 `related_name` 属性指定了从 `User` 到 `Post` 的反向关系名。我们将会在之后学习到更多关于这方面的内容。
+* author：这是一个 `ForeignKey` 。这个字段定义了多对一（many-to-one）的关系。我们告诉Django一篇帖子只能由一名用户编写，一名用户能编写多篇帖子。根据这个字段，Django将会在数据库中通过有关联的模型（model）主键来创建一个外键。在这个场景中，我们关联上了Django权限系统的*User*模型（model）。我们通过 `related_name` 属性指定了从 `User` 到 `Post` 的反向关系名。我们将会在之后学习到更多关于这方面的内容。
 * body：这是帖子的主体。它是 `TextField` ，在SQL数据库中被转化成 `TEXT` 。
 * publish：这个日期表明帖子什么时间发布。我们使用Djnago的 `timezone` 的 `now` 方法来设定默认值。`datetime.now` 仅仅只是个时区。
 * created：这个日期表明帖子什么时间创建。因为我们在这儿使用了 `auto_now_add` ，当一个对象被创建的时候这个字段会自动保存当前日期。
@@ -342,7 +342,7 @@ Migrations for 'blog':
         - Create model Post
 ```
 
-Django在blog应用下的migrations目录中创建了一个 `0001——initial.py` 文件。你可以打开这个文件来看下一个数据库迁移的内容。
+Django在blog应用下的migrations目录中创建了一个 `0001_initial.py` 文件。你可以打开这个文件来看下一个数据库迁移的内容。
 
 让我们来看下Django根据我们的模型（model）将会为在数据库中创建的表而执行的SQL代码。 `sqlmigrate` 命令带上数据库迁移（migration）的名字将会返回它们的SQL，但不会立即去执行。运行以下命令来看下输出：
 
@@ -358,7 +358,7 @@ CREATE INDEX "blog_post_4f331e2f" ON "blog_post" ("author_id");
 COMMIT;
 ```
 
-Django会根据你正在使用的数据库进行以上精准的输出。以上SQL语句是为SQLite数据库准备的。如你所见，Django生成的表名前缀为应用名之后跟上模型（model）的小写 `blog_post` ，但是你也可以通过在模型（models）的 `Meta` 类中使用 `db_table` 属性来指定表名。Django会自动为每个模型（model）创建一个主键，但是你也可以通过在模型（model）中的某个字段上设置 `primarry_key=True` 来指定主键。
+Django会根据你正在使用的数据库进行以上精准的输出。以上SQL语句是为SQLite数据库准备的。如你所见，Django生成的表名前缀为应用名，之后跟上模型（model）的小写 `blog_post` ，但是你也可以通过在模型（models）的 `Meta` 类中使用 `db_table` 属性来指定表名。Django会自动为每个模型（model）创建一个主键，但是你也可以通过在模型（model）中的某个字段上设置 `primarry_key=True` 来指定主键。
 
 让我们根据新模型（model）来同步数据库。运行以下的命令来应用已存在的数据迁移（migrations）：
 
@@ -375,7 +375,6 @@ python manage.py migrate
 如果为了添加，删除，或是改变了存在的模型（models）中字段，或者你添加了新的模型（models）而编辑了 *models.py* 文件，你都需要通过使用 `makemigrations` 命令做一次新的数据库迁移（migration）。数据库迁移（migration）允许Django来保持对模型（model）改变的跟踪。之后你必须通过 `migrate` 命令来保持数据库与我们的模型（models）同步。
 
 ## 为你的模型（models）创建一个管理站点
-
 现在我们已经定义好了 `Post` 模型（model），我们将要创建一个简单的管理站点来管理blog帖子。Django内置了一个管理接口，该接口对编辑内容非常的有用。这个Django管理站点会根据你的模型（model）元数据进行动态构建并且提供一个可读的接口来编辑内容。你可以对这个站点进行自由的定制，配置你的模型（models）在其中如何进行显示。
 
 请记住，`django.contrib.admin` 已经被包含在我们项目的 `INSTALLED_APPS` 设置中，我们不需要再额外添加。
@@ -383,7 +382,6 @@ python manage.py migrate
 ## 创建一个超级用户
 
 首先，我们需要创建一名用户来管理这个管理站点。运行以下的命令：
-​    
     python manage.py createsuperuser
 
 你会看下以下输出。输入你想要的用户名，邮箱和密码：
@@ -398,9 +396,11 @@ Superuser created successfully.
 
 ##Django管理站点
 现在，通过 `python manage.py runserver` 命令来启动开发服务器，之后在浏览器中打开 http://127.0.0.1:8000/admin/ 。你会看到管理站点的登录页面，如下所示：
+
 ![django-1-2](http://upload-images.jianshu.io/upload_images/3966530-e2479f1cb20b1d5f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 使用你在上一步中创建的超级用户信息进行登录。你将会看到管理站点的首页，如下所示：
+
 ![django-1-3](http://upload-images.jianshu.io/upload_images/3966530-80c83f3a385f13c1.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 `Group` 和 `User` 模型（models） 位于 `django.contrib.auth` ，是Django权限管理框架的一部分。如果你点击 `Users` ，你将会看到你之前创建的用户信息。你的blog应用的 `Post` 模型（model）和 `User` （model）关联在了一起。记住，它们是通过 `author` 字段进行关联的。
@@ -416,16 +416,19 @@ admin.site.register(Post)
 ```
 
 现在，在浏览器中刷新管理站点。你会看到你的 `Post` 模型（model）已经在页面中展示，如下所示：
+
 ![django-1-4](http://upload-images.jianshu.io/upload_images/3966530-52e408aa45e35c1f.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-这很简单，对吧？当你在Django的管理页面注册了一个模型（model），Django会通过对你的模型（models）进行内省然后提供给你一个非常友好有用的接口，这个接口允许你非常方便的排列，编辑，创建，以及删除对象。
+这很简单，对吧？当你在Django的管理页面注册了一个模型（model），~~Django会通过对你的模型（models）进行内省~~，然后提供给你一个非常友好有用的接口，这个接口允许你非常方便的排列，编辑，创建，以及删除对象。 **译者注：这里翻译有不通顺**
 
 点击` Posts` 右侧的 `Add` 链接来添加一篇新帖子。你将会看到Django根据你的模型（model）动态生成了一个表单，如下所示：
+
 ![django-1-5](http://upload-images.jianshu.io/upload_images/3966530-392e41ac7cb34cda.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 Django给不同类型的字段使用了不同的表单控件。即使是复杂的字段例如 `DateTimeField` 也被展示成一个简单的接口类似一个JavaScript日期选择器。
 
 填写好表单然后点击 `Save` 按钮。你会被重定向到帖子列页面并且得到一条帖子成功创建的提示，如下所示：
+
 ![django-1-6](http://upload-images.jianshu.io/upload_images/3966530-879a2158c1c80ae9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
@@ -460,6 +463,7 @@ class PostAdmin(admin.ModelAdmin):
 ```
 
 回到浏览器刷新管理站点页面，现在应该如下所示：
+
 ![django-1-7](http://upload-images.jianshu.io/upload_images/3966530-3b8a79f28e1a04de.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 你可以看到帖子列页面中展示的字段都是你在 `list-dispaly` 属性中指定的。这个列页面现在包含了一个右侧边栏允许你根据 `list_filter` 属性中指定的字段来过滤返回结果。一个搜索框也应用在页面中。这是因为我们还通过使用 `search_fields` 属性定义了一个搜索字段列。在搜索框的下方，有个可以通过时间快速导航的栏，该栏通过定义 `date_hierarchy` 属性出现。你还能看到这些帖子默认的通过 `Status` 和 `Publish` 列进行排序。这是因为你通过使用 `ordering` 属性指定了默认排序。
@@ -660,14 +664,14 @@ def post_list(request):
     return render(request, 'blog/post/list.html', {'posts': posts})
 ```
 
-你刚创建了你的第一个Django视图（view）。`post_list` 视图（view）将 `request` 对象作为唯一的参数。记住所有的的视图（views）都有需要这个参数。在这个视图（view）中，我们获取到了所有状态为已发布的帖子通过使用我们之前创建的 `published` 管理器（manager）。
+你刚创建了你的第一个Django视图（view）。`post_list` 视图（view）将 `request` 对象作为唯一的参数。记住所有的的视图（views）都有需要这个参数。在这个视图（view）中，我们通过使用我们之前创建的 `published` 管理器（manager）获取到了所有状态为已发布的帖子。
 
 最后，我们使用Django提供的快捷方法 `render()` 通过给予的模板（template）来渲染帖子列。这个函数将 `request` 对象作为参数，模板（template）路径以及变量来渲染的给予的模板（template）。它返回一个渲染文本（一般是HTML代码） `HttpResponse` 对象。 `render()` 方法考虑到了请求内容，这样任何模板（template）内容处理器设置的变量都可以带入给予的模板（template）中。你会在 `第三章，扩展你的blog应用` 学习到如何使用它们。
 
 让我们创建第二个视图（view）来展示一篇单独的帖子。添加如下代码到*views.py*文件中：
 ```python
 def post_detail(request, year, month, day, post):
-    post = get_object_or_404(Post, 
+    post = get_object_or_404(Post,
                             slug=post,
                             status='published',
                             publish__year=year,
@@ -938,8 +942,7 @@ urlpatterns = [
 ]
 ```
 
-为了保持分页处理能工作，我们必须将正确的页面对象传递给模板（tempalte）。Django的 `ListView` 通过叫做 `page_obj` 的变量来传递被选择的页面，所以你必须编辑你的 `post_list_html` 模板（template）去包含使用了正确的变量的分页处理，如下所示：
-​    
+为了保持分页处理能工作，我们必须将正确的页面对象传递给模板（tempalte）。Django的 `ListView` 通过叫做 `page_obj` 的变量来传递被选择的页面，所以你必须编辑你的 `post_list_html` 模板（template）去包含使用了正确的变量的分页处理，如下所示：​
     {% include "pagination.html" with page=page_obj %}
 
 在你的浏览器中打开 http://127.0.0.1:8000/blog/ 然后检查每一样功能是否都和之前的 `post_list` 视图（view）一样工作。这是一个简单的，通过使用Django提供的通用类的基于类视图（view）的例子。你将在 *第十章，创建一个在线学习平台* 以及相关的章节中学到更多的基于类的视图（views）。
