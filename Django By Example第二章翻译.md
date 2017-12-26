@@ -57,7 +57,7 @@ class EmailPostForm(forms.Form):
 
 > 表单可以存在你的Django项目的任何地方，但按照惯例将它们放在每一个应用下面的*forms.py*文件中
 
-`name` 字段是一个 `CharField` 。这种类型的字段被渲染成 `<input type=“text”>` HTML元素。每种字段类型都有默认的控件来确定它在HTML中的展示形式。通过改变控件的属性可以重写默认的控件。在 `comment` 字段中，我们使用 `<textarea></textarea>` HTML元素而不是使用默认的 `<input>` 元素来显示它。
+`name` 字段是一个 `CharField` 。这种类型的字段被渲染成 `<input type="text">` HTML元素。每种字段类型都有默认的控件来确定它在HTML中的展示形式。通过改变控件的属性可以重写默认的控件。在 `comment` 字段中，我们使用 `<textarea></textarea>` HTML元素而不是使用默认的 `<input>` 元素来显示它。
 
 字段验证取决于字段类型。例如， `email` 和 `to` 字段是 `EmailField` ,这两个字段都需要一个有效的email地址，否则字段验证将会抛出一个 `forms.ValidationError` 异常导致表单验证不通过。在表单验证的时候其他的参数也会被考虑进来：我们将 `name` 字段定义为一个最大长度为25的字符串；通过设置 `required=False` 让 `comments` 的字段可选。所有这些也会被考虑到字段验证中去。目前我们在表单中使用的这些字段类型只是Django支持的表单字段的一部分。要查看更多可利用的表单字段，你可以访问：https://docs.djangoproject.com/en/1.8/ref/forms/fields/
 
@@ -397,22 +397,28 @@ def post_detail(request, year, month, day, post):
 我们从 `post` 对象开始构建这个查询集（QuerySet）。我们使用关联对象的manager，这个manager是我们在 `Comment` 模型（model）中使用 `related_name` 关系属性为 `comments` 定义的。
 我们还在这个视图（view）中让我们的用户添加一条新的评论。因此，如果这个视图（view）是通过GET请求被加载的，那么我们用 `comment_fomr = commentForm()` 来创建一个表单实例。如果是通过POST请求，我们使用提交的数据并且用 `is_valid()` 方法验证这些数据去实例化表单。如果这个表单是无效的，我们会用验证错误信息渲染模板（template）。如果表单通过验证，我们会做以下的操作：
 
-* 1.我们通过调用这个表单的 `save()` 方法创建一个新的 `Comment` 对象，如下所示：
+1. 我们通过调用这个表单的 `save()` 方法创建一个新的 `Comment` 对象，如下所示：
 
-`new_comment = comment_form.save(commit=False)` 
+    ```python
+    new_comment = comment_form.save(commit=False)
+    ```
 
- `Save()` 方法创建了一个表单链接的model的实例，并将它保存到数据库中。如果你调用这个方法时设置`comment=False`，你创建的模型（model）实例不会即时保存到数据库中。当你想在最终保存之前修改这个model对象会非常方便，我们接下来将做这一步骤。 `save()` 方法是给 `ModelForm` 用的，而不是给 `Form` 实例用的，因为 `Form` 实例没有关联上任何模型（model）。
+    `Save()` 方法创建了一个表单链接的model的实例，并将它保存到数据库中。如果你调用这个方法时设置`comment=False`，你创建的模型（model）实例不会即时保存到数据库中。当你想在最终保存之前修改这个model对象会非常方便，我们接下来将做这一步骤。 `save()` 方法是给 `ModelForm` 用的，而不是给 `Form` 实例用的，因为 `Form` 实例没有关联上任何模型（model）。
 
-* 2.我们为我们刚创建的评论分配一个帖子：
+2. 我们为我们刚创建的评论分配一个帖子：
 
-        new_comment.post = post
+    ```python
+    new_comment.post = post
+    ```
 
     通过以上动作，我们指定新的评论是属于这篇给定的帖子。
 
-* 3.最后，我们用下面的代码将新的评论保存到数据库中：
+3. 最后，我们用下面的代码将新的评论保存到数据库中：
 
-        new_comment.save()
-    ​    
+    ```python
+    new_comment.save()
+    ```
+
     我们的视图（view）已经准备好显示和处理新的评论了。
 
 ## 在帖子详情模板（template）中添加评论
@@ -639,8 +645,7 @@ url(r'^$', views.post_list, name='post_list'),
 添加下面额外的URL pattern到通过标签过滤过的帖子列表中：
 
 ```python
-url(r'^tag/(?P<tag_slug>[-\w]+)/$',views.post_list,
-    name='post_list_by_tag'),
+url(r'^tag/(?P<tag_slug>[-\w]+)/$',views.post_list, name='post_list_by_tag'),
 ```
 
 如你所见，两个模式都指向了相同的视图（view），但是我们可以给它们不同的命名。第一个模式会调用 `post_list` 视图（view）并且不带上任何可选参数。然而第二个模式会调用这个视图（view）带上 `tag_slug` 参数。
@@ -707,10 +712,10 @@ similar_posts = similar_posts.annotate(same_tags=Count('tags'))\
 
 以上代码的解释如下：
 
-* 1.我们取回了一个包含当前帖子所有标签的 ID 的 Python 列表。 `values_list()` 查询集（QuerySet）返回包含给定的字段值的元祖。我们传给元祖 `flat=True` 来获取一个简单的列表类似 `[1,2,3,...]` 。
-* 2.我们获取所有包含这些标签的帖子排除了当前的帖子。
-* 3.我们使用 `Count` 聚合函数来生成一个计算字段 `same_tags` ，该字段包含与查询到的所有 标签共享的标签数量。
-* 4.我们通过共享的标签数量来排序（降序）结果并且通过 `publish` 字段来挑选拥有相同共享标签数量的帖子中的最近的一篇帖子。我们对返回的结果进行切片只保留最前面的 4 篇帖子。
+1. 我们取回了一个包含当前帖子所有标签的 ID 的 Python 列表。 `values_list()` 查询集（QuerySet）返回包含给定的字段值的元祖。我们传给元祖 `flat=True` 来获取一个简单的列表类似 `[1,2,3,...]` 。
+2. 我们获取所有包含这些标签的帖子排除了当前的帖子。
+3. 我们使用 `Count` 聚合函数来生成一个计算字段 `same_tags` ，该字段包含与查询到的所有 标签共享的标签数量。
+4. 我们通过共享的标签数量来排序（降序）结果并且通过 `publish` 字段来挑选拥有相同共享标签数量的帖子中的最近的一篇帖子。我们对返回的结果进行切片只保留最前面的 4 篇帖子。
 
 在 `render()` 函数中给上下文字典增加 `similar_posts` 对象，如下所示：
 
