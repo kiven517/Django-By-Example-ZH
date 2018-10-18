@@ -25,9 +25,9 @@
  * 为用户创建一个可以上传他们在其他网站发现的图片的系统
 
 首先，通过以下命令在你的 bookmarks 项目中新建一个应用：
-    
-    django-admin startapp images
-    
+​    
+​    django-admin startapp images
+
 像如下所示一样在你的 `settings.py` 文件中 `INSTALED_APPS` 设置项下添加 'images' :
 
     INSTALLED_APPS = [
@@ -76,7 +76,7 @@ class Image(models.Model):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
-            super(Image, self).save(*args, **kwargs)
+        super(Image, self).save(*args, **kwargs)
 ```
 在这段代码中，我们使用了 Django 提供的`slugify()`函数在没有提供`slug`字段时根据给定的图片标题自动生slug,然后，我们保存了这个对象。我们自动生成slug，这样的话用户就不用自己输入`slug`字段了。
 ##**建立多对多关系**
@@ -84,7 +84,7 @@ class Image(models.Model):
 在 Image 模型中添加以下字段：
 
 ```python
-user_like = models.ManyToManyField(settings.AUTH_USER_MODEL,
+users_like = models.ManyToManyField(settings.AUTH_USER_MODEL,
                                    related_name='images_liked',
                                    blank=True)
 ```
@@ -161,7 +161,7 @@ def clean_url(self):
     return url
 ```
 在这段代码中，我们定义了一个`clean_url`方法来清洁`url`字段，这段代码的工作流程是：
- 
+
  * 1. 我们从表单实例的`cleaned_data`字典中获取了`url`字段的值
  * 2. 我们分离了 URL 来获取文件扩展名，然后检查它是否为合法扩展名之一。如果它不是一个合法的扩展名，我们就会抛出`ValidationError`,并且表单也不会被认证。我们执行的是一个非常简单的认证。你可以使用更好的方法来验证所给的 URL 是否是一个合法的图片。
 除了验证所给的 URL， 我们还需要下载并保存图片文件。比如，我们可以使用操作表单的视图来下载图片。不过，我们将采用一个更加通用的方法 ———— 通过覆写我们模型表单中`save()`方法来完成这个任务。
@@ -611,7 +611,7 @@ def image_like(request):
 在这个视图中我们使用了两个 GET 参数：
  1. `image_id`:用户操作的 image 对象的 ID 
  2. `action`: 用户想要执行的动作。我们把它的值设定为`like`或者'`dislike`
- 
+
 我们在`Image`模型的多对多字段`users_like`上使用 Django 提供的管理器来添加或者删除对象关系通过调用`add()`或者`remove()`方法来执行这些动作。调用`add()`时传递一个存在于关联模型中的对象集不会重复添加这个对象，同样，调用`remove()`时传递一个不存在于关联模型中的对象集什操作也不会执行。另一个有用的多对多管理器是`clear()`，它将删除所有的关联对象集。
 
 最后，我们使用 Django 提供的`JsonResponse`类来将给你定的对象转换为一个 JSON 输出，这个类返回一个带有`application/json`内容类型的 HTTP 响应。
@@ -944,15 +944,15 @@ url(r'^$', views.image_list, name='list'),
 
 在浏览器中访问`http://127.0.0.1:8000/images/`,你会看到你之前添加的一组图片，看起来像这样：
 ![Django-5-9][9]
-  [1]: http://ohqrvqrlb.bkt.clouddn.com/django-5-1.png
-  [2]: http://ohqrvqrlb.bkt.clouddn.com/django-5-2.png
-  [3]: http://ohqrvqrlb.bkt.clouddn.com/django-5-3.png
-  [4]: http://ohqrvqrlb.bkt.clouddn.com/django-5-4.png
-  [5]: http://ohqrvqrlb.bkt.clouddn.com/django-5-5.png
-  [6]: http://ohqrvqrlb.bkt.clouddn.com/django-5-6.png
-  [7]: http://ohqrvqrlb.bkt.clouddn.com/django-5-7.png
-  [8]: http://ohqrvqrlb.bkt.clouddn.com/django-5-8.png
-  [9]: http://ohqrvqrlb.bkt.clouddn.com/django-5-9.png
+[1]: http://ohqrvqrlb.bkt.clouddn.com/django-5-1.png
+[2]: http://ohqrvqrlb.bkt.clouddn.com/django-5-2.png
+[3]: http://ohqrvqrlb.bkt.clouddn.com/django-5-3.png
+[4]: http://ohqrvqrlb.bkt.clouddn.com/django-5-4.png
+[5]: http://ohqrvqrlb.bkt.clouddn.com/django-5-5.png
+[6]: http://ohqrvqrlb.bkt.clouddn.com/django-5-6.png
+[7]: http://ohqrvqrlb.bkt.clouddn.com/django-5-7.png
+[8]: http://ohqrvqrlb.bkt.clouddn.com/django-5-8.png
+[9]: http://ohqrvqrlb.bkt.clouddn.com/django-5-9.png
 
 滚动到底部将会加载下一页。确定你已经使用书签添加了多于 8 张图片，因为我们每一页展示的是 8 张图片。记得使用 Firebug 或者类似的工具来跟踪 AJAX 请求和调试你的 JavaScript 代码。
 

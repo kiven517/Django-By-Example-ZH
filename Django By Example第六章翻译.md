@@ -107,7 +107,7 @@ User.add_to_class('following',
 运行如下命令来生成*account*应用的初始迁移：
 
     python manage.py makemigrations account
-    
+
 你会看到如下输出：
 
 ```python
@@ -119,11 +119,11 @@ Migrations for 'account':
 现在继续运行以下命令来同步应用到数据库中：
 
     python manage.py migrate account
-    
+
 你会看到如下内容包含在输出中：
 
     Applying account.0002_contact... OK
-    
+
 *Contact*模型（model）现在已经被同步进了数据库，我们可以在用户之间创建关系。但是，我们的网站还没有提供一个方法来浏览用户或查看详细的用户profile。让我们为*User*模型构建列表和详情视图（views）。
 
 ### 为用户profiles创建列表和详情视图（views）
@@ -208,7 +208,7 @@ Django会为所有出现在*ABSOLUTE_URL_OVERRIDES*设置中的模型（models�
          <div class="user">
             <a href="{{ user.get_absolute_url }}">
              {% thumbnail user.profile.photo "180x180" crop="100%" as im %}
-               ![]({{ im.url }})
+               <img src="{{ im.url }}">
              {% endthumbnail %}
            </a>
            <div class="info">
@@ -265,7 +265,7 @@ Django会为所有出现在*ABSOLUTE_URL_OVERRIDES*设置中的模型（models�
         {% endif %}
     </a>
     <div id="image-list" class="image-container">
-        {% include "images/image/list_ajax.html" with images = user.images_created.all %}
+        {% include "images/image/list_ajax.html" with images=user.images_created.all %}
     </div>
     {% endwith %}
 {% endblock %}
@@ -315,6 +315,8 @@ def user_follow(request):
 ```python
     url(r'^users/follow/$', views.user_follow, name='user_follow'), # 这里有个坑不能设置为users／follow／ chrome直接404 需要设置别的名字 如user／follow
 ```
+
+> 这里说明一下，上面 url 的设置，原译者针对报 404 的解决办法给出的是起了个别名。其实这不是正确的操作方法，这么多这届破坏了 url 的统一性，也不是原作者的意思。出现这个问题的原因是因为这条 url 被放在上面我们加的 `user_detail` 的下面了。由于 url 的匹配是按照顺序来的。所以这条 url 的正则 `'^users/(?P<username>[-\w]+)/$'` 在匹配的时候会先执行，也就是把 `users/follow/` 中的 `follow` 当成的一个用户进入到这个视图中了，才会报 404。正确的解决办法是把 `user_follow` 放到 ``user_detail` ` 的前面。这里也给大家在写 url 的时候分析一下匹配顺序，免得造成意想不到的 BUG。(huagang注)
 
 请确保你放置的这个URL模式的位置在*user_detail*URL模式之前。否则，任何对 */users/follow/* 的请求都会被*user_detail*模式给正则匹配然后执行。请记住，每一次的HTTP请求Django都会对每一条存在的URL模式进行匹配直到第一条匹配成功才会停止继续匹配。
 
@@ -543,7 +545,7 @@ def create_action(user, verb, target=None):
     last_minute = now - datetime.timedelta(seconds=60)
     similar_actions = Action.objects.filter(user_id=user.id,
                                             verb= verb,
-                                        timestamp__gte=last_minute)
+                                        created__gte=last_minute)
     if target:
         target_ct = ContentType.objects.get_for_model(target)
         similar_actions = similar_actions.filter(
@@ -574,7 +576,7 @@ def create_action(user, verb, target=None):
 编辑*images*应用下的*views.py*文件添加以下导入：
 
     from actions.utils import create_action
-    
+
 在*image_create*视图（view）中，在保存图片之后添加`create-action()`，如下所示：
 
 ```python
@@ -592,7 +594,7 @@ create_action(request.user, 'likes', image)
 现在编辑*account*应用中的*view.py*文件添加以下导入：
 
     from actions.utils import create_action
-    
+
 在*register*视图（view）中，在创建*Profile*对象之后添加`create-action()`，如下所示：
 
 ```python
@@ -635,7 +637,7 @@ def dashboard(request):
 
 在这个视图（view），我们从数据库取回所有的动作（actions），不包含当前用户执行的动作。如果当前用户还没有关注过任何人，我们展示在平台中的其他用户的最新动作执行。这是一个默认的行为当当前用户还没有关注过任何其他的用户。如果当前用户已经关注了其他用户，我们就限制查询只显示当前用户关注的用户的动作执行。最后，我们限制结果只返回最前面的10个动作。我们在这儿并不使用`order_by()`，因为我们依赖之前已经在*Action*模型（model）的*Meta*的排序选项。最新的动作会首先返回，因为我们在*Action*模型（model）中设置过`ordering = ('-created',)`。
 
-## 优化涉及被关联的对想的查询集（QuerySets）
+## 优化涉及被关联的对象的查询集（QuerySets）
 
 每次你取回一个*Aciton*对象，你都可能存取它的有关联的*User*对象，
 并且可能这个用户也关联它的*Profile*对象。Django ORM提供了一个简单的方式一次性取回有关联的对象，避免对数据库进行额外的查询。
@@ -686,7 +688,45 @@ actions/
 编辑*actions/action/detail.html*模板（template）文件添加如下代码：
 
 ```html
-明天添加
+{% load thumbnail %}
+
+{% with user=action.user profile=action.user.profile %}
+    <div class="action">
+        <div class="images">
+            {% if profile.photo %}
+                {% thumbnail user.profile.photo "80x80" crop="100%" as im %}
+                    <a href="{{ user.get_absolute_url }}">
+                        <img src="{{ im.url }}" alt="{{ user.get_full_name }}" class="item-img">
+                    </a>
+                {% endthumbnail %}
+            {% endif %}
+
+            {% if action.target %}
+                {% with target=action.target %}
+                    {% if target.image %}
+                        {% thumbnail target.image "80x80" crop="100%" as im %}
+                            <a href="{{ target.get_absolute_url }}">
+                                <img src="{{ im.url }}" class="item-img">
+                            </a>
+                        {% endthumbnail %}
+                    {% endif %}
+                {% endwith %}
+            {% endif %}
+
+        </div>
+        <div class="info">
+            <p><span class="date">{{ action.created|timesince }} ago</span><br/>
+                <a href="{{ user.get_absolute_url }}">{{ user.first_name }}</a>
+                {{ action.verb }}
+                {% if action.target %}
+                    {% with target=action.target %}
+                        <a href="{{ target.get_absolute_url }}">{{ target }}</a>
+                    {% endwith %}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+{% endwith %}
 ```
 
 这个模板用来显示一个*Action*对象。首先，我们使用`{% with %}`模板标签（template tag）来获取用户操作的动作（action）和他们的profile。然后，我们显示目标对象的图片如果*Action*对象有一个关联的目标对象。最后，如果有执行过的动作（action），包括动作和目标对象，我们就显示链接给用户。
@@ -726,7 +766,7 @@ Django模型（models）提供了几个信号，它们位于*django.db.models.si
 
 以上只是Django提供的一小部分信号。你可以通过访问 https://docs.djangoproject.com/en/1.8/ref/signals/ 获得更多信号资料。
 
-打个比方，你想要获取热门图片。你可以使用Django的聚合函数来获取图片，通过图片获取的用户喜欢数量来进行排序。要记住你已经使用过Django聚合函数在*第三章 扩展你的blog应用*。以下代码将会获取图片并进行排序通过它们被用户喜欢的数量：
+打个比方，你想要获取热门图片。你可以使用Django的聚合函数来获取图片，通过获取喜欢图片的用户数量来进行排序。要记住你已经在第三章 扩展你的blog应用*中使用过Django聚合函数了。以下代码将会获取喜欢图片的用户数量并进行排序：
 
 ```python
 from django.db.models import Count
@@ -744,14 +784,14 @@ total_likes = models.PositiveIntegerField(db_index=True,
                                           default=0)
 ```
 
-*total_likes*字段允许我们给每张图片存储被用户喜欢的总数。非规范化数据非常有用当你想要使用他们来过滤或排序查询集（QuerySets）。
+*total_likes*字段允许我们给每张图片存储被用户喜欢的总数。当你想要使用非规范化数据来过滤或排序查询集（QuerySets）他们是非常有用的。
 
 > 在你使用非规范化字段之前你必须考虑下其他几种提高性能的方法。考虑下数据库索引，最佳化查询以及缓存在开始规范化你的数据之前。
 
 运行以下命令将新添加的字段迁移到数据库中：
 
     python manage.py makemigrations images
-    
+
 你会看到如下输出：
 
 ```python
@@ -763,11 +803,11 @@ Migrations for 'images':
 接着继续运行以下命令来应用迁移：
 
     python manage.py migrate images
-    
+
 输出中会包含以下内容：
 
     Applying images.0002_image_total_likes... OK
-    
+
 我们要给*m2m_changed*信号附加一个*receiver*函数。在*images*应用目录下创建一个新的文件命名为*signals.py*。给该文件添加如下代码：
 
 ```python
@@ -812,7 +852,7 @@ class ImagesConfig(AppConfig):
 现在我们需要告诉Django我们的应用配置位于哪里。编辑位于*images*应用目录下的*__init__.py*文件添加如下内容：
 
     default_app_config = 'images.apps.ImagesConfig'
-    
+
 打开你的浏览器浏览一个图片的详细页面然后点击**like**按钮。再进入管理页面看下该图片的*total_like*属性。你会看到*total_likes*属性已经更新了最新的like数如下所示：
 
 ![django-6-5](http://upload-images.jianshu.io/upload_images/3966530-5e1e8cfc6b3cfcbe.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
@@ -850,7 +890,7 @@ make （译者注：这里是假设你使用的是linux或者mac系统才有make
 在Redis安装完成后允许以下shell命令来初始化Redis服务：
 
     src/redis-server
-    
+
 你会看到输出的结尾如下所示：
 
 ```shell
@@ -862,11 +902,11 @@ make （译者注：这里是假设你使用的是linux或者mac系统才有make
 默认的，Redis运行会占用6379端口，但是你也可以指定一个自定义的端口通过使用`--port`标志，例如：`redis-server --port 6655`。当你的服务启动完毕，你可以在其他的终端中打开Redis客户端通过使用如下命令：
 
     src/redis-cli
-    
+
 你会看到Redis客户端shell如下所示：
 
     127.0.0.1:6379>
-    
+
 Redis客户端允许你在当前shell中立即执行Rdis命令。来我们来尝试一些命令。键入*SET*命令在Redis客户端中存储一个值到一个键中：
 
 ```shell
@@ -918,7 +958,7 @@ OK
 我们需要绑定Python和Redis。通过pip渠道安装*redis-py*命令如下：
 
     pip install redis==2.10.3（译者注：版本可能有更新，如果需要最新版本，可以不带上'==2.10.3'后缀）
-    
+
 你可以访问 http://redis-py.readthedocs.org/ 得到redis-py文档。
 
 *redis-py*提供两个类用来与Redis交互：*StrictRedis*和*Redis*。两者提供了相同的功能。*StrictRedis*类尝试遵守官方的Redis命令语法。*Redis*类型继承*Strictredis*重写了部分方法来提供向后的兼容性。我们将会使用*StrictRedis*类，因为它遵守Redis命令语法。打开Python shell执行以下命令：
@@ -1072,7 +1112,7 @@ def image_ranking(request):
 最后为新的视图（view）创建一个URL模式。编辑*images*应用下的*urls.py*文件，添加如下内容：
 
     url(r'^ranking/$', views.image_ranking, name='create'),
-    
+
 在浏览器中打开 http://127.0.0.1:8000/images/ranking/ 。你会看到如下图片排行：
 
 ![django-6-7](http://upload-images.jianshu.io/upload_images/3966530-e3e6a0ac2b862a51.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
